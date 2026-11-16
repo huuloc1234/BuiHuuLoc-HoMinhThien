@@ -1,0 +1,534 @@
+@model List<DiemRenLuyen.Models.PhieuDanhGia>
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    var hocKy           = ViewBag.HocKy as string ?? "HK1_2024-2025";
+    var contractAddress = ViewBag.ContractAddress as string ?? "";
+    var adminWallet     = ViewBag.AdminWallet as string ?? "";
+    var dsBiSua         = ViewBag.DanhSachBiSua as HashSet<int> ?? new HashSet<int>();
+
+    var totalSV    = Model?.Count ?? 0;
+    var daNop      = Model?.Count(p => p.TrangThaiFile == "Đã nộp") ?? 0;
+    var daChot     = Model?.Count(p => p.DaChot) ?? 0;
+    var chuaCham   = Model?.Count(p => p.DiemAdminCham == null) ?? 0;
+}
+
+<style>
+.stat-card { border-radius: 16px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: transform 0.2s; }
+.stat-card:hover { transform: translateY(-3px); }
+.stat-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+.btn-blockchain-bulk { background: linear-gradient(135deg, #f6851b, #e4761b); border: none; color: white; border-radius: 8px; padding: 7px 16px; font-size: 0.875rem; font-weight: 600; box-shadow: 0 3px 10px rgba(246,133,27,0.3); }
+.btn-blockchain-bulk:hover { opacity: 0.9; color: white; }
+.btn-blockchain-bulk:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+.btn-verify { background: linear-gradient(135deg, #11998e, #38ef7d); border: none; color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; }
+.btn-verify:hover { opacity: 0.85; color: white; }
+.btn-verify-danger { background: linear-gradient(135deg, #e52d27, #b31217); border: none; color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; animation: pulseDanger 1.8s infinite; }
+.btn-verify-danger:hover { opacity: 0.9; color: white; }
+@@keyframes pulseDanger {
+    0%   { box-shadow: 0 0 0 0 rgba(229, 45, 39, 0.65); }
+    70%  { box-shadow: 0 0 0 7px rgba(229, 45, 39, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(229, 45, 39, 0); }
+}
+#modalOverlay { display:none; position:fixed; top:0;left:0;right:0;bottom:0; background:rgba(0,0,0,0.5); z-index:9998; align-items:center; justify-content:center; }
+#modalOverlay.show { display:flex; }
+.modal-box { background: white; border-radius: 16px; padding: 2rem; max-width: 580px; width: 92%; z-index:9999; max-height: 90vh; overflow-y: auto; }
+.row-checkbox { width: 19px; height: 19px; cursor: pointer; border: 2px solid #475569 !important; }
+.row-checkbox:disabled { border-color: #cbd5e1 !important; cursor: not-allowed; }
+</style>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="card stat-card bg-primary text-white p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon bg-white bg-opacity-25"><i class="bi bi-people-fill"></i></div>
+                <div><div class="h3 fw-bold mb-0">@totalSV</div><div class="small opacity-75">Tổng Sinh Viên</div></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card stat-card bg-success text-white p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon bg-white bg-opacity-25"><i class="bi bi-file-earmark-check-fill"></i></div>
+                <div><div class="h3 fw-bold mb-0">@daNop</div><div class="small opacity-75">Đã Nộp File</div></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card stat-card bg-warning text-dark p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon bg-white bg-opacity-50"><i class="bi bi-clock-history"></i></div>
+                <div><div class="h3 fw-bold mb-0">@chuaCham</div><div class="small opacity-75">Chưa Chấm</div></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card stat-card text-white p-3" style="background: linear-gradient(135deg,#f6851b,#e4761b)">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon bg-white bg-opacity-25"><i class="bi bi-link-45deg"></i></div>
+                <div><div class="h3 fw-bold mb-0">@daChot</div><div class="small opacity-75">Đã Lên Blockchain</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Blockchain Config Card -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius:12px; background:linear-gradient(135deg,#1a1a2e,#16213e)">
+    <div class="card-body d-flex flex-wrap align-items-center gap-3 py-3 px-4">
+        <div class="text-white-50 small"><i class="bi bi-link-45deg me-1"></i>Contract:</div>
+        <code class="text-warning small">@(contractAddress.Length > 10 ? contractAddress : "Chưa cấu hình")</code>
+        <div class="vr bg-white opacity-25 d-none d-md-block"></div>
+        <div class="text-white-50 small"><i class="bi bi-wallet2 me-1"></i>Admin Wallet:</div>
+        <code class="text-info small">@(adminWallet.Length > 10 ? adminWallet[..12] + "..." : "Chưa cấu hình")</code>
+        <div class="vr bg-white opacity-25 d-none d-md-block"></div>
+        <span class="badge bg-success"><i class="bi bi-circle-fill me-1" style="font-size:0.5rem"></i>Sepolia Testnet</span>
+        <div id="mmStatus" class="badge bg-warning text-dark ms-auto">
+            <i class="bi bi-wallet2 me-1"></i>MetaMask: Chưa kết nối
+        </div>
+    </div>
+</div>
+
+<!-- Bộ lọc + Tiêu đề + NÚT CHỐT TỔNG -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h5 class="fw-bold mb-0"><i class="bi bi-table me-2"></i>Danh Sách Phiếu - @hocKy</h5>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+        <!-- NÚT CHỐT TỔNG DUY NHẤT -->
+        <button type="button" id="btnChotHangLoat" class="btn-blockchain-bulk" onclick="chotHangLoat()" disabled>
+            <i class="bi bi-link-45deg me-1"></i>Chốt Đã Chọn Lên Blockchain (<span id="selectedCount">0</span>)
+        </button>
+
+        <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="🔍 Tìm MSSV, Họ tên..." style="width:200px" />
+        <select class="form-select form-select-sm" id="filterTrangThai" style="width:155px">
+            <option value="">Tất cả trạng thái</option>
+            <option value="Đã nộp">Đã nộp file</option>
+            <option value="Chưa nộp">Chưa nộp file</option>
+        </select>
+    </div>
+</div>
+
+<!-- Bảng danh sách -->
+<div class="card border-0 shadow-sm" style="border-radius:12px; overflow:hidden">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0" id="svTable">
+            <thead class="table-light">
+                <tr>
+                    <th class="text-center" style="width: 48px;">
+                        <input type="checkbox" id="checkAll" class="form-check-input row-checkbox" title="Chọn tất cả phiếu đủ điều kiện chốt" />
+                    </th>
+                    <th>#</th>
+                    <th>MSSV</th>
+                    <th>Họ Tên</th>
+                    <th>Lớp</th>
+                    <th class="text-center">File Minh Chứng</th>
+                    <th class="text-center">Điểm SV Tự Chấm</th>
+                    <th class="text-center">Điểm Admin Chấm</th>
+                    <th class="text-center">Xếp Loại</th>
+                    <th class="text-center">Blockchain</th>
+                    <th class="text-center">Thao Tác</th>
+                </tr>
+            </thead>
+            <tbody>
+            @{int stt = 0;}
+            @foreach (var p in (Model ?? new()))
+            {
+                stt++;
+                bool coTheChot  = !p.DaChot && p.DiemAdminCham.HasValue;
+                bool biCanThiep = p.DaChot && dsBiSua.Contains(p.Id);
+                <tr data-mssv="@p.MSSV" data-hoten="@p.TaiKhoan?.HoTen" data-trangthai="@p.TrangThaiFile" class="@(biCanThiep ? "table-danger" : "")">
+                    <td class="text-center align-middle">
+                        @if (coTheChot)
+                        {
+                            <input type="checkbox"
+                                   class="form-check-input row-checkbox item-checkbox"
+                                   value="@p.Id"
+                                   data-mssv="@p.MSSV"
+                                   data-hoten="@p.TaiKhoan?.HoTen"
+                                   data-hocky="@p.HocKy"
+                                   title="Tích chọn phiếu của @p.TaiKhoan?.HoTen" />
+                        }
+                        else if (p.DaChot)
+                        {
+                            <i class="bi bi-check-square-fill @(biCanThiep ? "text-danger" : "text-success") fs-5"
+                               title="@(biCanThiep ? "Cảnh báo: Dữ liệu SQL bị sửa đổi!" : "Đã chốt lên Blockchain")"></i>
+                        }
+                        else
+                        {
+                            <input type="checkbox" class="form-check-input row-checkbox" disabled title="Cần chấm điểm trước khi chốt" />
+                        }
+                    </td>
+                    <td class="text-muted small align-middle">@stt</td>
+                    <td class="fw-semibold align-middle">@p.MSSV</td>
+                    <td class="align-middle">@p.TaiKhoan?.HoTen</td>
+                    <td class="text-muted small align-middle">@p.TaiKhoan?.Lop</td>
+                    <td class="text-center align-middle">
+                        @if (p.TrangThaiFile == "Đã nộp")
+                        {
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Đã nộp
+                                </span>
+                                <a href="/Admin/TaiFileMinhChung/@p.Id" class="badge bg-info text-dark text-decoration-none" title="@(p.TenFileGoc ?? "Tải file minh chứng")">
+                                    <i class="bi bi-download me-1"></i>Tải về
+                                </a>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+                                <i class="bi bi-x-circle me-1"></i>Chưa nộp
+                            </span>
+                        }
+                    </td>
+                    <td class="text-center align-middle fw-bold">@p.DiemSVTuCham</td>
+                    <td class="text-center align-middle">
+                        @if (p.DiemAdminCham.HasValue)
+                        {
+                            <span class="fw-bold @(biCanThiep ? "text-danger" : "text-primary")">@p.DiemAdminCham</span>
+                            @if (biCanThiep)
+                            {
+                                <div class="mt-1">
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-exclamation-octagon-fill me-1"></i>Sai lệch Hash
+                                    </span>
+                                </div>
+                            }
+                            else if (!p.DaChot && p.TrangThaiKhieuNai == "ChoXuLy")
+                            {
+                                <div class="mt-1">
+                                    <span class="badge bg-danger" title="@p.NoiDungKhieuNai">
+                                        <i class="bi bi-exclamation-triangle-fill me-1"></i>Có khiếu nại
+                                    </span>
+                                </div>
+                            }
+                            else if (!p.DaChot && p.TrangThaiKhieuNai == "DaXuLy")
+                            {
+                                <div class="mt-1">
+                                    <span class="badge bg-info text-dark">Đã sửa lại điểm</span>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted small">Chưa chấm</span>
+                        }
+                    </td>
+                    <td class="text-center align-middle">
+                        <span class="@p.XepLoaiCssClass">@p.XepLoai</span>
+                    </td>
+                    <td class="text-center align-middle">
+                        @if (p.DaChot)
+                        {
+                            <a href="https://sepolia.etherscan.io/tx/@p.TxHash" target="_blank"
+                               class="badge @(biCanThiep ? "bg-danger" : "bg-success") text-decoration-none" title="@p.TxHash">
+                                <i class="bi @(biCanThiep ? "bi-exclamation-triangle" : "bi-check-circle") me-1"></i>Đã chốt
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="badge bg-light text-muted">Chưa chốt</span>
+                        }
+                    </td>
+                    <td class="text-center align-middle">
+                        <div class="d-flex gap-1 justify-content-center">
+                            <!-- Xem & Chấm điểm -->
+                            <a href="/Admin/ChiTiet/@p.Id" class="btn btn-sm btn-outline-primary" title="Xem & Chấm điểm">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+
+                            <!-- Kiểm tra toàn vẹn (Tự đổi sang màu đỏ nếu phát hiện sửa SQL) -->
+                            @if (p.DaChot)
+                            {
+                                <button type="button"
+                                        id="btn-verify-@p.Id"
+                                        class="@(biCanThiep ? "btn-verify-danger" : "btn-verify")"
+                                        onclick="kiemTraToanVen(@p.Id, '@p.MSSV')"
+                                        title="@(biCanThiep ? "CẢNH BÁO: Dữ liệu SQL không khớp Blockchain!" : "Kiểm tra tính toàn vẹn")">
+                                    <i class="bi @(biCanThiep ? "bi-shield-exclamation" : "bi-shield-check")"></i>
+                                </button>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Blockchain Result -->
+<div id="modalOverlay">
+    <div class="modal-box shadow-lg">
+        <div id="modalContent"></div>
+        <button class="btn btn-secondary w-100 mt-3" onclick="closeModal()">Đóng</button>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+// ================================================================
+// CHECKBOX CHỌN TỪNG DÒNG & CHỌN TẤT CẢ
+// ================================================================
+const checkAllBox = document.getElementById('checkAll');
+const btnChotHangLoat = document.getElementById('btnChotHangLoat');
+const selectedCountSpan = document.getElementById('selectedCount');
+
+function updateSelectedState() {
+    const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+    const allEnabledBoxes = document.querySelectorAll('.item-checkbox');
+    selectedCountSpan.textContent = checkedBoxes.length;
+    btnChotHangLoat.disabled = checkedBoxes.length === 0;
+
+    if (allEnabledBoxes.length > 0) {
+        checkAllBox.checked = checkedBoxes.length === allEnabledBoxes.length;
+        checkAllBox.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < allEnabledBoxes.length;
+    } else {
+        checkAllBox.checked = false;
+        checkAllBox.indeterminate = false;
+    }
+}
+
+checkAllBox.addEventListener('change', function () {
+    document.querySelectorAll('.item-checkbox').forEach(cb => {
+        if (cb.closest('tr').style.display !== 'none') {
+            cb.checked = checkAllBox.checked;
+        }
+    });
+    updateSelectedState();
+});
+
+document.querySelectorAll('.item-checkbox').forEach(cb => {
+    cb.addEventListener('change', updateSelectedState);
+});
+
+// ================================================================
+// FILTER / SEARCH TABLE
+// ================================================================
+document.getElementById('searchInput').addEventListener('input', filterTable);
+document.getElementById('filterTrangThai').addEventListener('change', filterTable);
+
+function filterTable() {
+    const q  = document.getElementById('searchInput').value.toLowerCase();
+    const tt = document.getElementById('filterTrangThai').value;
+    document.querySelectorAll('#svTable tbody tr').forEach(row => {
+        const mssv  = row.dataset.mssv?.toLowerCase() ?? '';
+        const hoten = row.dataset.hoten?.toLowerCase() ?? '';
+        const trangThai = row.dataset.trangthai ?? '';
+        const matchQ  = mssv.includes(q) || hoten.includes(q) || !q;
+        const matchTT = !tt || trangThai === tt;
+        row.style.display = (matchQ && matchTT) ? '' : 'none';
+    });
+}
+
+// ================================================================
+// KẾT NỐI METAMASK
+// ================================================================
+let provider, signer, adminAddress;
+
+async function ketNoiMetaMask() {
+    if (typeof window.ethereum === 'undefined') {
+        alert('Vui lòng cài đặt MetaMask!'); return;
+    }
+    provider     = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send('eth_requestAccounts', []);
+    signer       = provider.getSigner();
+    adminAddress = await signer.getAddress();
+    document.getElementById('mmStatus').textContent = `MetaMask: ${adminAddress.substring(0,8)}...`;
+    document.getElementById('mmStatus').className   = 'badge bg-success ms-auto';
+}
+
+window.addEventListener('load', async () => {
+    if (typeof window.ethereum !== 'undefined') {
+        try { await ketNoiMetaMask(); } catch(e) {}
+    }
+});
+
+// ================================================================
+// CHỐT TỔNG HÀNG LOẠT LÊN BLOCKCHAIN
+// ================================================================
+const CONTRACT_ADDRESS = '@contractAddress';
+const CONTRACT_ABI = [
+    "function luuMaHash(string _mssv, string _hocKy, string _dataHash) external",
+    "function daChotDiem(string _mssv, string _hocKy) external view returns (bool)",
+    "function layMaHash(string _mssv, string _hocKy) external view returns (string, uint256, address)"
+];
+
+async function chotHangLoat() {
+    const selected = Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => ({
+        phieuId: parseInt(cb.value),
+        mssv: cb.dataset.mssv,
+        hoTen: cb.dataset.hoten,
+        hocKy: cb.dataset.hocky
+    }));
+
+    if (selected.length === 0) return;
+    if (!signer) { await ketNoiMetaMask(); }
+
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    let thanhCong = 0;
+    let danhSachLoi = [];
+
+    for (let i = 0; i < selected.length; i++) {
+        const item = selected[i];
+        const buocHienTai = `[${i + 1}/${selected.length}]`;
+
+        try {
+            showModal(`
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-3"></div>
+                    <h5>${buocHienTai} Đang băm dữ liệu SV ${item.mssv}...</h5>
+                    <p class="text-muted small">${item.hoTen}</p>
+                </div>
+            `);
+
+            // 1. Lấy DataHash từ Backend C#
+            const res  = await fetch(`/Admin/LayDuLieuHash/${item.phieuId}`);
+            const data = await res.json();
+            if (!data.success) throw new Error(data.message);
+
+            updateModal(`
+                <div class="text-center">
+                    <div class="spinner-border text-warning mb-3"></div>
+                    <h5>${buocHienTai} Xác nhận ký trên MetaMask</h5>
+                    <p class="fw-bold mb-1">SV: ${item.mssv} - ${item.hoTen}</p>
+                    <p class="text-muted small">SHA-256: <code>${data.dataHash.substring(0,20)}...</code></p>
+                </div>
+            `);
+
+            // 2. Gửi giao dịch lên Smart Contract
+            const tx = await contract.luuMaHash(data.mssv, data.hocKy, data.dataHash);
+
+            updateModal(`
+                <div class="text-center">
+                    <div class="spinner-border text-success mb-3"></div>
+                    <h5>${buocHienTai} Đang chờ Sepolia xác nhận...</h5>
+                    <p class="text-muted small">SV ${item.mssv} | Tx: <code>${tx.hash.substring(0,18)}...</code></p>
+                </div>
+            `);
+
+            await tx.wait(1);
+
+            // 3. Lưu TxHash về SQL Server
+            await fetch('/Admin/XacNhanChotDiem', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ PhieuId: item.phieuId, TxHash: tx.hash, DataHash: data.dataHash })
+            });
+
+            thanhCong++;
+        } catch (err) {
+            const msg = err.code === 4001 ? 'Admin hủy giao dịch trên MetaMask' : (err.reason || err.message);
+            danhSachLoi.push(`${item.mssv}: ${msg}`);
+            if (err.code === 4001) break;
+        }
+    }
+
+    let loiHtml = danhSachLoi.length > 0
+        ? `<div class="alert alert-danger text-start small mt-3 mb-0"><strong>Chi tiết lỗi:</strong><ul class="mb-0 ps-3">${danhSachLoi.map(e => `<li>${e}</li>`).join('')}</ul></div>`
+        : '';
+
+    showModal(`
+        <div class="text-center">
+            <i class="bi ${thanhCong > 0 ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger'}" style="font-size:3rem"></i>
+            <h4 class="mt-3">Hoàn tất chốt hàng loạt: ${thanhCong}/${selected.length} phiếu</h4>
+            <p class="text-muted small">Các phiếu thành công đã được lưu vĩnh viễn lên Blockchain Sepolia.</p>
+            ${loiHtml}
+        </div>
+    `);
+
+    if (thanhCong > 0) {
+        setTimeout(() => location.reload(), 3000);
+    }
+}
+
+// ================================================================
+// KIỂM TRA TÍNH TOÀN VẸN & TRUY VẾT TÀI KHOẢN SỬA ĐIỂM
+// ================================================================
+async function kiemTraToanVen(phieuId, mssv) {
+    showModal(`
+        <div class="text-center">
+            <div class="spinner-border text-info mb-3"></div>
+            <h5>Đang đối soát tính toàn vẹn...</h5>
+            <p class="text-muted small">Băm lại dữ liệu SQL và so sánh với Blockchain</p>
+        </div>
+    `);
+
+    try {
+        const res  = await fetch(`/Admin/KiemTraToanVen/${phieuId}`);
+        const data = await res.json();
+
+        if (!data.success) throw new Error(data.message);
+
+        const isOk  = data.trungKhop;
+        const icon  = isOk ? '✅' : '🚨';
+        const cls   = isOk ? 'success' : 'danger';
+        const title = isOk ? 'DỮ LIỆU TOÀN VẸN' : 'CẢNH BÁO: DỮ LIỆU ĐÃ BỊ THAY ĐỔI!';
+
+        // Cập nhật màu nút chiếc khiên ngay trên bảng mà không cần reload
+        const btnVerify = document.getElementById(`btn-verify-${phieuId}`);
+        if (btnVerify) {
+            if (isOk) {
+                btnVerify.className = 'btn-verify';
+                btnVerify.innerHTML = '<i class="bi bi-shield-check"></i>';
+                btnVerify.title = 'Dữ liệu toàn vẹn';
+            } else {
+                btnVerify.className = 'btn-verify-danger';
+                btnVerify.innerHTML = '<i class="bi bi-shield-exclamation"></i>';
+                btnVerify.title = 'CẢNH BÁO: Dữ liệu SQL bị thay đổi!';
+            }
+        }
+
+        // Khung hiển thị dấu vết tài khoản SQL đã sửa điểm (nếu phát hiện sai lệch)
+        let truyVetHtml = '';
+        if (!isOk) {
+            if (data.truyVet) {
+                truyVetHtml = `
+                    <div class="alert alert-danger mt-3 mb-0 text-start small">
+                        <div class="fw-bold mb-1">
+                            <i class="bi bi-person-badge-fill me-1"></i>TRUY VẾT TÀI KHOẢN CAN THIỆP SQL:
+                        </div>
+                        <ul class="mb-0 ps-3">
+                            <li><strong>Tài khoản SQL thực hiện:</strong> <span class="badge bg-danger">${data.truyVet.taiKhoanSQL}</span></li>
+                            <li><strong>Công cụ sửa đổi:</strong> ${data.truyVet.phanMem} (Máy: <strong>${data.truyVet.mayTinh}</strong>)</li>
+                            <li><strong>Biến động điểm:</strong> <span class="text-success fw-bold">${data.truyVet.diemCu}</span> ➔ <span class="text-danger fw-bold">${data.truyVet.diemMoi}</span></li>
+                            <li><strong>Thời điểm sửa:</strong> ${data.truyVet.thoiGian}</li>
+                        </ul>
+                    </div>
+                `;
+            } else {
+                truyVetHtml = `
+                    <div class="alert alert-danger mt-3 mb-0 small">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        Dữ liệu trong SQL Server đã bị can thiệp trái phép sau khi chốt!
+                    </div>
+                `;
+            }
+        }
+
+        showModal(`
+            <div class="text-center">
+                <div style="font-size:2.5rem">${icon}</div>
+                <h4 class="mt-2 text-${cls} fw-bold">${title}</h4>
+                <div class="mt-3 text-start small">
+                    <div class="mb-2 p-2 bg-light rounded border">
+                        <strong>Hash SQL hiện tại (SHA-256):</strong><br/>
+                        <code class="text-break ${isOk ? '' : 'text-danger'}">${data.hashHienTai}</code>
+                    </div>
+                    <div class="p-2 ${isOk ? 'bg-success' : 'bg-danger'} bg-opacity-10 rounded border border-${cls}">
+                        <strong>Hash trên Blockchain:</strong><br/>
+                        <code class="text-break text-success">${data.hashBlockchain}</code>
+                    </div>
+                    ${truyVetHtml}
+                </div>
+            </div>
+        `);
+    } catch(err) {
+        showModal(`<div class="text-center text-danger"><h5>❌ Lỗi: ${err.message}</h5></div>`);
+    }
+}
+
+// Modal helpers
+function showModal(html)   { document.getElementById('modalContent').innerHTML = html; document.getElementById('modalOverlay').classList.add('show'); }
+function updateModal(html) { document.getElementById('modalContent').innerHTML = html; }
+function closeModal()      { document.getElementById('modalOverlay').classList.remove('show'); }
+document.getElementById('modalOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+</script>
+}

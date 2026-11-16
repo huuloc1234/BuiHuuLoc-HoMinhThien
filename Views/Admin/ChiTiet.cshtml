@@ -1,0 +1,868 @@
+@model DiemRenLuyen.Models.PhieuDanhGia
+@using System.Globalization
+@{
+    ViewData["Title"] = "Chi Tiết & Chấm Điểm Rèn Luyện";
+    var daChot      = Model?.DaChot ?? false;
+    var daChamKhoa  = Model?.DiemAdminCham != null;
+    var m1 = Model?.Muc1 ?? new DiemRenLuyen.Models.ChiTietMuc1();
+    var m2 = Model?.Muc2 ?? new DiemRenLuyen.Models.ChiTietMuc2();
+    var m3 = Model?.Muc3 ?? new DiemRenLuyen.Models.ChiTietMuc3();
+    var m4 = Model?.Muc4 ?? new DiemRenLuyen.Models.ChiTietMuc4();
+    var m5 = Model?.Muc5 ?? new DiemRenLuyen.Models.ChiTietMuc5();
+
+    string Fmt(decimal? val) => (val ?? 0m).ToString("0.##", CultureInfo.InvariantCulture);
+    string FmtKhoa(decimal? adminVal, decimal? svVal)
+        => (daChamKhoa ? (adminVal ?? 0m) : (svVal ?? 0m)).ToString("0.##", CultureInfo.InvariantCulture);
+}
+
+<style>
+    .phieu-card { border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    .table-eval th { background: #f8fafc; font-size: 0.85rem; font-weight: 600; vertical-align: middle; }
+    .table-eval td { vertical-align: middle; font-size: 0.875rem; }
+    .header-section { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); color: white; border-radius: 12px; padding: 1.5rem; }
+    .score-input { width: 78px; text-align: center; font-weight: 700; border-radius: 6px; border: 1.5px solid #3b82f6; color: #1d4ed8; }
+    .score-input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(59,130,246,0.25); }
+    .score-input:disabled { background-color: #f1f5f9; border-color: #cbd5e1; color: #64748b; cursor: not-allowed; }
+    .section-title { background: #f1f5f9; border-left: 4px solid #2563eb; padding: 10px 14px; font-weight: 700; font-size: 0.95rem; margin-bottom: 0; }
+    .sticky-summary { position: sticky; top: 80px; }
+    #docPreviewContent { max-height: 72vh; overflow-y: auto; background: #fff; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; line-height: 1.6; }
+    #docPreviewContent img { max-width: 100%; height: auto; border-radius: 6px; margin: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    #docPreviewContent table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    #docPreviewContent table td, #docPreviewContent table th { border: 1px solid #cbd5e1; padding: 6px 10px; }
+</style>
+
+<!-- HEADER THÔNG TIN SINH VIÊN -->
+<div class="header-section mb-4 shadow">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+        <div>
+            <a href="/Admin/Index?hocKy=@Model?.HocKy" class="btn btn-sm btn-outline-light me-2">
+                <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
+            </a>
+            <span class="badge bg-info text-dark fs-6">Duyệt & Chấm Điểm (Khoa / Hội đồng)</span>
+        </div>
+        <div>
+            @if (daChot)
+            {
+                <span class="badge bg-success px-3 py-2 fs-6">
+                    <i class="bi bi-lock-fill me-1"></i>Đã chốt On-chain
+                </span>
+            }
+            else
+            {
+                <span class="badge bg-warning text-dark px-3 py-2 fs-6">
+                    <i class="bi bi-clock-history me-1"></i>Chưa chốt On-chain
+                </span>
+            }
+        </div>
+    </div>
+
+    <h4 class="fw-bold mb-1">SV: @(Model?.TaiKhoan?.HoTen) - @(Model?.MSSV)</h4>
+    <div class="small opacity-90">
+        <span class="me-3"><strong>Lớp:</strong> @(Model?.TaiKhoan?.Lop)</span>
+        @if (!string.IsNullOrEmpty(Model?.TaiKhoan?.KhoaHoc))
+        {
+            <span class="me-3"><strong>Khóa:</strong> @Model.TaiKhoan.KhoaHoc</span>
+        }
+        <span class="me-3"><strong>Học kỳ:</strong> @Model?.HocKy</span>
+        @if (!string.IsNullOrEmpty(Model?.TaiKhoan?.DiaChiVi))
+        {
+            <span><strong>Ví SV:</strong> <code class="text-warning">@Model.TaiKhoan.DiaChiVi</code></span>
+        }
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        @if (!string.IsNullOrEmpty(Model?.NoiDungKhieuNai))
+        {
+            <div class="alert @(Model.TrangThaiKhieuNai == "ChoXuLy" ? "alert-danger" : "alert-secondary") shadow-sm mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <strong>
+                        <i class="bi bi-chat-left-quote-fill me-1"></i>
+                        @(Model.TrangThaiKhieuNai == "ChoXuLy" ? "SINH VIÊN ĐANG KHIẾU NẠI / PHẢN HỒI:" : "LỊCH SỬ KHIẾU NẠI CỦA SINH VIÊN (ĐÃ XỬ LÝ):")
+                    </strong>
+                    <small class="text-muted">@Model.NgayKhieuNai?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+                </div>
+                <div class="p-2 bg-white rounded border text-dark">@Model.NoiDungKhieuNai</div>
+            </div>
+        }
+
+        @if (!daChot)
+        {
+            <div class="alert alert-info d-flex justify-content-between align-items-center py-2 px-3 mb-3 shadow-sm">
+                <span class="small"><i class="bi bi-lightbulb-fill text-warning me-1"></i>@(daChamKhoa ? "Đang hiển thị điểm Khoa đã lưu. Bạn có thể chỉnh sửa và bấm Lưu lại." : "Đã điền sẵn theo điểm SV tự chấm để Khoa duyệt nhanh.")</span>
+                <button type="button" class="btn btn-sm btn-primary text-nowrap ms-2" onclick="copyDiemSVSangKhoa()">
+                    <i class="bi bi-copy me-1"></i>Reset theo điểm SV
+                </button>
+            </div>
+        }
+
+        <form method="post" action="/Admin/ChamDiem" id="adminEvalForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="phieuId" value="@Model?.Id" />
+
+            <!-- MỤC I -->
+            <div class="card phieu-card mb-4 overflow-hidden">
+                <div class="section-title d-flex justify-content-between align-items-center">
+                    <span>I. Đánh giá về ý thức tham gia học tập (Tối đa 20 điểm)</span>
+                    <div>
+                        <span class="badge bg-success me-1">SV: @m1.TongMuc1SV / 20</span>
+                        <span class="badge bg-primary" id="badgeM1">Khoa: @(m1.TongMuc1Admin ?? 0) / 20</span>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered table-eval mb-0">
+                        <thead>
+                            <tr class="text-center">
+                                <th style="width: 45px;">#</th>
+                                <th>Nội dung đánh giá</th>
+                                <th style="width: 95px;">Tối đa</th>
+                                <th style="width: 95px;">SV tự chấm</th>
+                                <th style="width: 115px;">Khoa đánh giá</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-center">1</td>
+                                <td>Sinh viên có điểm trung bình học tập tích lũy với thang điểm 4</td>
+                                <td class="text-center text-muted">5 đ/HK</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m1.TC1_DiemTBHT)</td>
+                                <td class="text-center"><input type="number" name="muc1.Admin_TC1_DiemTBHT" class="form-control score-input score-m1" value="@FmtKhoa(m1.Admin_TC1_DiemTBHT, m1.TC1_DiemTBHT)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">2</td>
+                                <td>Có giấy chứng nhận tham gia học các lớp chuyên đề kỹ năng học tập trong và ngoài Trường</td>
+                                <td class="text-center text-muted">3 đ/HK</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m1.TC2_ChuyenDeKyNang)</td>
+                                <td class="text-center"><input type="number" name="muc1.Admin_TC2_ChuyenDeKyNang" class="form-control score-input score-m1" value="@FmtKhoa(m1.Admin_TC2_ChuyenDeKyNang, m1.TC2_ChuyenDeKyNang)" min="0" max="3" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">3</td>
+                                <td>Hội thảo hoặc Tọa đàm do Khoa hoặc Trường tổ chức</td>
+                                <td class="text-center text-muted">3 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m1.TC3_HoiThaoToaDam)</td>
+                                <td class="text-center"><input type="number" name="muc1.Admin_TC3_HoiThaoToaDam" class="form-control score-input score-m1" value="@FmtKhoa(m1.Admin_TC3_HoiThaoToaDam, m1.TC3_HoiThaoToaDam)" min="0" max="15" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">4</td>
+                                <td>Các cuộc thi học thuật cấp Khoa hoặc Trường tổ chức trực tiếp hoặc trực tuyến</td>
+                                <td class="text-center text-muted">7 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m1.TC4_ThiHocThuatTruong)</td>
+                                <td class="text-center"><input type="number" name="muc1.Admin_TC4_ThiHocThuatTruong" class="form-control score-input score-m1" value="@FmtKhoa(m1.Admin_TC4_ThiHocThuatTruong, m1.TC4_ThiHocThuatTruong)" min="0" max="14" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">5</td>
+                                <td>Các cuộc thi học thuật do các đơn vị bên ngoài trường tổ chức</td>
+                                <td class="text-center text-muted">8 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m1.TC5_ThiHocThuatNgoai)</td>
+                                <td class="text-center"><input type="number" name="muc1.Admin_TC5_ThiHocThuatNgoai" class="form-control score-input score-m1" value="@FmtKhoa(m1.Admin_TC5_ThiHocThuatNgoai, m1.TC5_ThiHocThuatNgoai)" min="0" max="16" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">6</td>
+                                <td>Báo cáo khoa học cấp Khoa</td>
+                                <td class="text-center text-muted">8 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m1.TC6_BaoCaoKhoaHocKhoa)</td>
+                                <td class="text-center"><input type="number" name="muc1.Admin_TC6_BaoCaoKhoaHocKhoa" class="form-control score-input score-m1" value="@FmtKhoa(m1.Admin_TC6_BaoCaoKhoaHocKhoa, m1.TC6_BaoCaoKhoaHocKhoa)" min="0" max="16" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">7</td>
+                                <td>Tham gia đề tài NCKH Trường (không tính bài tập, tiểu luận, đồ án môn học, luận văn…)</td>
+                                <td class="text-center text-muted">10 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m1.TC7_DeTaiNCKHTruong)</td>
+                                <td class="text-center"><input type="number" name="muc1.Admin_TC7_DeTaiNCKHTruong" class="form-control score-input score-m1" value="@FmtKhoa(m1.Admin_TC7_DeTaiNCKHTruong, m1.TC7_DeTaiNCKHTruong)" min="0" max="20" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">8</td>
+                                <td>Viết bài báo khoa học trong và ngoài Trường</td>
+                                <td class="text-center text-muted">8 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m1.TC8_BaiBaoKhoaHoc)</td>
+                                <td class="text-center"><input type="number" name="muc1.Admin_TC8_BaiBaoKhoaHoc" class="form-control score-input score-m1" value="@FmtKhoa(m1.Admin_TC8_BaiBaoKhoaHoc, m1.TC8_BaiBaoKhoaHoc)" min="0" max="16" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">9</td>
+                                <td>Các cuộc thi khởi nghiệp do Trường tổ chức</td>
+                                <td class="text-center text-muted">7 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m1.TC9_KhoiNghiepTruong)</td>
+                                <td class="text-center"><input type="number" name="muc1.Admin_TC9_KhoiNghiepTruong" class="form-control score-input score-m1" value="@FmtKhoa(m1.Admin_TC9_KhoiNghiepTruong, m1.TC9_KhoiNghiepTruong)" min="0" max="14" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">10</td>
+                                <td>Các cuộc thi khởi nghiệp do đơn vị ngoài Trường tổ chức</td>
+                                <td class="text-center text-muted">8 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m1.TC10_KhoiNghiepNgoai)</td>
+                                <td class="text-center"><input type="number" name="muc1.Admin_TC10_KhoiNghiepNgoai" class="form-control score-input score-m1" value="@FmtKhoa(m1.Admin_TC10_KhoiNghiepNgoai, m1.TC10_KhoiNghiepNgoai)" min="0" max="16" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">11</td>
+                                <td>Thành viên các câu lạc bộ học thuật cấp Khoa, Trường</td>
+                                <td class="text-center text-muted">2 đ/HK</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m1.TC11_ThanhVienCLB)</td>
+                                <td class="text-center"><input type="number" name="muc1.Admin_TC11_ThanhVienCLB" class="form-control score-input score-m1" value="@FmtKhoa(m1.Admin_TC11_ThanhVienCLB, m1.TC11_ThanhVienCLB)" min="0" max="2" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">12</td>
+                                <td>Các hoạt động khác</td>
+                                <td class="text-center text-muted">3 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m1.TC12_HoatDongKhac)</td>
+                                <td class="text-center"><input type="number" name="muc1.Admin_TC12_HoatDongKhac" class="form-control score-input score-m1" value="@FmtKhoa(m1.Admin_TC12_HoatDongKhac, m1.TC12_HoatDongKhac)" min="0" max="15" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MỤC II -->
+            <div class="card phieu-card mb-4 overflow-hidden">
+                <div class="section-title d-flex justify-content-between align-items-center">
+                    <span>II. Ý thức chấp hành nội quy, quy chế Nhà trường (Tối đa 25 điểm)</span>
+                    <div>
+                        <span class="badge bg-success me-1">SV: @m2.TongMuc2SV / 25</span>
+                        <span class="badge bg-primary" id="badgeM2">Khoa: @(m2.TongMuc2Admin ?? 0) / 25</span>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered table-eval mb-0">
+                        <thead>
+                            <tr class="text-center">
+                                <th style="width: 45px;">#</th>
+                                <th>Nội dung đánh giá</th>
+                                <th style="width: 95px;">Tối đa</th>
+                                <th style="width: 95px;">SV tự chấm</th>
+                                <th style="width: 115px;">Khoa đánh giá</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-center">1</td>
+                                <td>Sinh viên có ý thức, thái độ trong học tập</td>
+                                <td class="text-center text-muted">5 đ/HK</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m2.TC1_ThaiDoHocTap)</td>
+                                <td class="text-center"><input type="number" name="muc2.Admin_TC1_ThaiDoHocTap" class="form-control score-input score-m2" value="@FmtKhoa(m2.Admin_TC1_ThaiDoHocTap, m2.TC1_ThaiDoHocTap)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">2</td>
+                                <td>Sinh viên có ý thức chấp hành tốt, đầy đủ các nội quy, quy chế của Nhà trường</td>
+                                <td class="text-center text-muted">5 đ/HK</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m2.TC2_ChapHanhNoiQuy)</td>
+                                <td class="text-center"><input type="number" name="muc2.Admin_TC2_ChapHanhNoiQuy" class="form-control score-input score-m2" value="@FmtKhoa(m2.Admin_TC2_ChapHanhNoiQuy, m2.TC2_ChapHanhNoiQuy)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">3</td>
+                                <td>Sinh viên thực hiện tốt quy chế khi tham gia các kỳ thi, cuộc thi</td>
+                                <td class="text-center text-muted">5 đ/HK</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m2.TC3_QuyCheThi)</td>
+                                <td class="text-center"><input type="number" name="muc2.Admin_TC3_QuyCheThi" class="form-control score-input score-m2" value="@FmtKhoa(m2.Admin_TC3_QuyCheThi, m2.TC3_QuyCheThi)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">4</td>
+                                <td>Chấp hành quy định của thư viện</td>
+                                <td class="text-center text-muted">5 đ/HK</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m2.TC4_QuyDinhThuVien)</td>
+                                <td class="text-center"><input type="number" name="muc2.Admin_TC4_QuyDinhThuVien" class="form-control score-input score-m2" value="@FmtKhoa(m2.Admin_TC4_QuyDinhThuVien, m2.TC4_QuyDinhThuVien)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">5</td>
+                                <td>Chấp hành quy định của phòng học, phòng máy, phòng thực hành</td>
+                                <td class="text-center text-muted">5 đ/HK</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m2.TC5_QuyDinhPhongHocMay)</td>
+                                <td class="text-center"><input type="number" name="muc2.Admin_TC5_QuyDinhPhongHocMay" class="form-control score-input score-m2" value="@FmtKhoa(m2.Admin_TC5_QuyDinhPhongHocMay, m2.TC5_QuyDinhPhongHocMay)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">6</td>
+                                <td>Thực hiện đăng ký ngoại trú</td>
+                                <td class="text-center text-muted">5 đ/HK</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m2.TC6_DangKyNgoaiTru)</td>
+                                <td class="text-center"><input type="number" name="muc2.Admin_TC6_DangKyNgoaiTru" class="form-control score-input score-m2" value="@FmtKhoa(m2.Admin_TC6_DangKyNgoaiTru, m2.TC6_DangKyNgoaiTru)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">7</td>
+                                <td>Mặc đồng phục đúng quy định</td>
+                                <td class="text-center text-muted">5 đ/HK</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m2.TC7_MacDongPhuc)</td>
+                                <td class="text-center"><input type="number" name="muc2.Admin_TC7_MacDongPhuc" class="form-control score-input score-m2" value="@FmtKhoa(m2.Admin_TC7_MacDongPhuc, m2.TC7_MacDongPhuc)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">8</td>
+                                <td>Sinh hoạt lớp với CVHT</td>
+                                <td class="text-center text-muted">5 đ/HK</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m2.TC8_SinhHoatLopCVHT)</td>
+                                <td class="text-center"><input type="number" name="muc2.Admin_TC8_SinhHoatLopCVHT" class="form-control score-input score-m2" value="@FmtKhoa(m2.Admin_TC8_SinhHoatLopCVHT, m2.TC8_SinhHoatLopCVHT)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MỤC III -->
+            <div class="card phieu-card mb-4 overflow-hidden">
+                <div class="section-title d-flex justify-content-between align-items-center">
+                    <span>III. Hoạt động chính trị, xã hội, VH-VN, TDTT... (Tối đa 20 điểm)</span>
+                    <div>
+                        <span class="badge bg-success me-1">SV: @m3.TongMuc3SV / 20</span>
+                        <span class="badge bg-primary" id="badgeM3">Khoa: @(m3.TongMuc3Admin ?? 0) / 20</span>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered table-eval mb-0">
+                        <thead>
+                            <tr class="text-center">
+                                <th style="width: 45px;">#</th>
+                                <th>Nội dung đánh giá</th>
+                                <th style="width: 95px;">Tối đa</th>
+                                <th style="width: 95px;">SV tự chấm</th>
+                                <th style="width: 115px;">Khoa đánh giá</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-center">1</td>
+                                <td>Hoạt động bắt buộc do Khoa hoặc Trường tổ chức</td>
+                                <td class="text-center text-muted">3 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m3.TC1_BatBuocKhoaTruong)</td>
+                                <td class="text-center"><input type="number" name="muc3.Admin_TC1_BatBuocKhoaTruong" class="form-control score-input score-m3" value="@FmtKhoa(m3.Admin_TC1_BatBuocKhoaTruong, m3.TC1_BatBuocKhoaTruong)" min="0" max="9" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">2</td>
+                                <td>Đại hội Chi Đoàn/Chi Hội; sinh hoạt Chi Đoàn/Chi Hội</td>
+                                <td class="text-center text-muted">3 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m3.TC2_DaiHoiChiDoan)</td>
+                                <td class="text-center"><input type="number" name="muc3.Admin_TC2_DaiHoiChiDoan" class="form-control score-input score-m3" value="@FmtKhoa(m3.Admin_TC2_DaiHoiChiDoan, m3.TC2_DaiHoiChiDoan)" min="0" max="6" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">3</td>
+                                <td>Báo cáo chuyên đề do Trường tổ chức trực tiếp hoặc trực tuyến</td>
+                                <td class="text-center text-muted">4 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m3.TC3_BaoCaoChuyenDe)</td>
+                                <td class="text-center"><input type="number" name="muc3.Admin_TC3_BaoCaoChuyenDe" class="form-control score-input score-m3" value="@FmtKhoa(m3.Admin_TC3_BaoCaoChuyenDe, m3.TC3_BaoCaoChuyenDe)" min="0" max="8" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">4</td>
+                                <td>Hoạt động ngoại khóa hoặc các cuộc thi do CLB, Khoa, Trường hoặc ngoài Trường tổ chức</td>
+                                <td class="text-center text-muted">7 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m3.TC4_NgoaiKhoaThiCLB)</td>
+                                <td class="text-center"><input type="number" name="muc3.Admin_TC4_NgoaiKhoaThiCLB" class="form-control score-input score-m3" value="@FmtKhoa(m3.Admin_TC4_NgoaiKhoaThiCLB, m3.TC4_NgoaiKhoaThiCLB)" min="0" max="14" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">5</td>
+                                <td>Hoạt động ngoại khóa hoặc các cuộc thi từ cấp Thành phố trở lên</td>
+                                <td class="text-center text-muted">8 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m3.TC5_NgoaiKhoaCapThanhPho)</td>
+                                <td class="text-center"><input type="number" name="muc3.Admin_TC5_NgoaiKhoaCapThanhPho" class="form-control score-input score-m3" value="@FmtKhoa(m3.Admin_TC5_NgoaiKhoaCapThanhPho, m3.TC5_NgoaiKhoaCapThanhPho)" min="0" max="16" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">6</td>
+                                <td>Được kết nạp Đoàn</td>
+                                <td class="text-center text-muted">5 đ</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m3.TC6_KetNapDoan)</td>
+                                <td class="text-center"><input type="number" name="muc3.Admin_TC6_KetNapDoan" class="form-control score-input score-m3" value="@FmtKhoa(m3.Admin_TC6_KetNapDoan, m3.TC6_KetNapDoan)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">7</td>
+                                <td>Được kết nạp Đảng</td>
+                                <td class="text-center text-muted">8 đ</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m3.TC7_KetNapDang)</td>
+                                <td class="text-center"><input type="number" name="muc3.Admin_TC7_KetNapDang" class="form-control score-input score-m3" value="@FmtKhoa(m3.Admin_TC7_KetNapDang, m3.TC7_KetNapDang)" min="0" max="8" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">8</td>
+                                <td>Các hoạt động, phong trào do các đơn vị, Đoàn, Hội điều động</td>
+                                <td class="text-center text-muted">4 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m3.TC8_DieuDongDoanHoi)</td>
+                                <td class="text-center"><input type="number" name="muc3.Admin_TC8_DieuDongDoanHoi" class="form-control score-input score-m3" value="@FmtKhoa(m3.Admin_TC8_DieuDongDoanHoi, m3.TC8_DieuDongDoanHoi)" min="0" max="8" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">9</td>
+                                <td>Thành viên các Câu lạc bộ, đội, nhóm thuộc Đoàn Thanh niên, Hội Sinh viên</td>
+                                <td class="text-center text-muted">2 đ/HK</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m3.TC9_ThanhVienDoiNhom)</td>
+                                <td class="text-center"><input type="number" name="muc3.Admin_TC9_ThanhVienDoiNhom" class="form-control score-input score-m3" value="@FmtKhoa(m3.Admin_TC9_ThanhVienDoiNhom, m3.TC9_ThanhVienDoiNhom)" min="0" max="2" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">10</td>
+                                <td>Hoạt động “Học tập các bài lý luận chính trị”</td>
+                                <td class="text-center text-muted">4 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m3.TC10_LyLuanChinhTri)</td>
+                                <td class="text-center"><input type="number" name="muc3.Admin_TC10_LyLuanChinhTri" class="form-control score-input score-m3" value="@FmtKhoa(m3.Admin_TC10_LyLuanChinhTri, m3.TC10_LyLuanChinhTri)" min="0" max="4" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">11</td>
+                                <td>Hoạt động đền ơn đáp nghĩa, Thắp nến tri ân</td>
+                                <td class="text-center text-muted">3 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m3.TC11_DenOnDapNghia)</td>
+                                <td class="text-center"><input type="number" name="muc3.Admin_TC11_DenOnDapNghia" class="form-control score-input score-m3" value="@FmtKhoa(m3.Admin_TC11_DenOnDapNghia, m3.TC11_DenOnDapNghia)" min="0" max="6" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">12</td>
+                                <td>Hoạt động lao động tình nguyện tại Trường</td>
+                                <td class="text-center text-muted">3 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m3.TC12_LaoDongTinhNguyen)</td>
+                                <td class="text-center"><input type="number" name="muc3.Admin_TC12_LaoDongTinhNguyen" class="form-control score-input score-m3" value="@FmtKhoa(m3.Admin_TC12_LaoDongTinhNguyen, m3.TC12_LaoDongTinhNguyen)" min="0" max="6" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">13</td>
+                                <td>Được khen thưởng trong các hoạt động phong trào</td>
+                                <td class="text-center text-muted">7 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m3.TC13_KhenThuongPhongTrao)</td>
+                                <td class="text-center"><input type="number" name="muc3.Admin_TC13_KhenThuongPhongTrao" class="form-control score-input score-m3" value="@FmtKhoa(m3.Admin_TC13_KhenThuongPhongTrao, m3.TC13_KhenThuongPhongTrao)" min="0" max="7" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">14</td>
+                                <td>Tập thể được khen thưởng trong các hoạt động phong trào</td>
+                                <td class="text-center text-muted">1 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m3.TC14_TapTheKhenThuong)</td>
+                                <td class="text-center"><input type="number" name="muc3.Admin_TC14_TapTheKhenThuong" class="form-control score-input score-m3" value="@FmtKhoa(m3.Admin_TC14_TapTheKhenThuong, m3.TC14_TapTheKhenThuong)" min="0" max="2" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">15</td>
+                                <td>Các hoạt động khác</td>
+                                <td class="text-center text-muted">3 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m3.TC15_HoatDongKhac)</td>
+                                <td class="text-center"><input type="number" name="muc3.Admin_TC15_HoatDongKhac" class="form-control score-input score-m3" value="@FmtKhoa(m3.Admin_TC15_HoatDongKhac, m3.TC15_HoatDongKhac)" min="0" max="15" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MỤC IV -->
+            <div class="card phieu-card mb-4 overflow-hidden">
+                <div class="section-title d-flex justify-content-between align-items-center">
+                    <span>IV. Ý thức công dân trong quan hệ cộng đồng (Tối đa 25 điểm)</span>
+                    <div>
+                        <span class="badge bg-success me-1">SV: @m4.TongMuc4SV / 25</span>
+                        <span class="badge bg-primary" id="badgeM4">Khoa: @(m4.TongMuc4Admin ?? 0) / 25</span>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered table-eval mb-0">
+                        <thead>
+                            <tr class="text-center">
+                                <th style="width: 45px;">#</th>
+                                <th>Nội dung đánh giá</th>
+                                <th style="width: 95px;">Tối đa</th>
+                                <th style="width: 95px;">SV tự chấm</th>
+                                <th style="width: 115px;">Khoa đánh giá</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-center">1</td>
+                                <td>Chấp hành luật pháp, các quy định của Nhà nước</td>
+                                <td class="text-center text-muted">10 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC1_ChapHanhPhapLuat)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC1_ChapHanhPhapLuat" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC1_ChapHanhPhapLuat, m4.TC1_ChapHanhPhapLuat)" min="0" max="10" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">2</td>
+                                <td>Có hành vi tốt, tinh thần sẻ chia, giúp đỡ người yếu thế được ghi nhận bằng văn bản</td>
+                                <td class="text-center text-muted">5 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC2_HanhViTotSeChia)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC2_HanhViTotSeChia" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC2_HanhViTotSeChia, m4.TC2_HanhViTotSeChia)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">3</td>
+                                <td>Được biểu dương, khen thưởng về tham gia các hoạt động xã hội ngoài trường</td>
+                                <td class="text-center text-muted">5 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC3_BieuDuongKhenThuongXH)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC3_BieuDuongKhenThuongXH" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC3_BieuDuongKhenThuongXH, m4.TC3_BieuDuongKhenThuongXH)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">4</td>
+                                <td>Giao lưu chương trình “Giao lưu các câu lạc bộ, đội, nhóm trực thuộc”</td>
+                                <td class="text-center text-muted">5 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC4_GiaoLuuCLBDoiNhom)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC4_GiaoLuuCLBDoiNhom" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC4_GiaoLuuCLBDoiNhom, m4.TC4_GiaoLuuCLBDoiNhom)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">5</td>
+                                <td>Chương trình “Tư vấn tuyển sinh”</td>
+                                <td class="text-center text-muted">5 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC5_TuVanTuyenSinh)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC5_TuVanTuyenSinh" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC5_TuVanTuyenSinh, m4.TC5_TuVanTuyenSinh)" min="0" max="10" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">6</td>
+                                <td>Công tác nhập học</td>
+                                <td class="text-center text-muted">5 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC6_CongTacNhapHoc)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC6_CongTacNhapHoc" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC6_CongTacNhapHoc, m4.TC6_CongTacNhapHoc)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">7</td>
+                                <td>Công tác khám sức khỏe sinh viên đầu khóa</td>
+                                <td class="text-center text-muted">5 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC7_KhamSucKhoeDauKhoa)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC7_KhamSucKhoeDauKhoa" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC7_KhamSucKhoeDauKhoa, m4.TC7_KhamSucKhoeDauKhoa)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">8</td>
+                                <td>Công tác Ngày hội việc làm</td>
+                                <td class="text-center text-muted">5 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC8_NgayHoiViecLam)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC8_NgayHoiViecLam" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC8_NgayHoiViecLam, m4.TC8_NgayHoiViecLam)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">9</td>
+                                <td>Công tác tổ chức Lễ Tốt nghiệp</td>
+                                <td class="text-center text-muted">5 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC9_LeTotNghiep)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC9_LeTotNghiep" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC9_LeTotNghiep, m4.TC9_LeTotNghiep)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">10</td>
+                                <td>Công tác kiểm tra hồ sơ sinh viên</td>
+                                <td class="text-center text-muted">5 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC10_KiemTraHoSoSV)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC10_KiemTraHoSoSV" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC10_KiemTraHoSoSV, m4.TC10_KiemTraHoSoSV)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">11</td>
+                                <td>Tham gia các phiên giao dịch việc làm</td>
+                                <td class="text-center text-muted">3 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC11_PhienGiaoDichViecLam)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC11_PhienGiaoDichViecLam" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC11_PhienGiaoDichViecLam, m4.TC11_PhienGiaoDichViecLam)" min="0" max="6" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">12</td>
+                                <td>Hiến máu tình nguyện</td>
+                                <td class="text-center text-muted">10 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC12_HienMauTinhNguyen)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC12_HienMauTinhNguyen" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC12_HienMauTinhNguyen, m4.TC12_HienMauTinhNguyen)" min="0" max="20" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">13</td>
+                                <td>Chương trình “Xuân tình nguyện”</td>
+                                <td class="text-center text-muted">5 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC13_XuanTinhNguyen)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC13_XuanTinhNguyen" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC13_XuanTinhNguyen, m4.TC13_XuanTinhNguyen)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">14</td>
+                                <td>Chiến dịch tình nguyện “Mùa hè xanh”</td>
+                                <td class="text-center text-muted">7 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC14_MuaHeXanh)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC14_MuaHeXanh" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC14_MuaHeXanh, m4.TC14_MuaHeXanh)" min="0" max="7" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">15</td>
+                                <td>Chương trình “Ngày Chủ nhật xanh”</td>
+                                <td class="text-center text-muted">5 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC15_ChuNhatXanh)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC15_ChuNhatXanh" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC15_ChuNhatXanh, m4.TC15_ChuNhatXanh)" min="0" max="10" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">16</td>
+                                <td>Chương trình “Thứ Bảy tình nguyện”</td>
+                                <td class="text-center text-muted">5 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC16_ThuBayTinhNguyen)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC16_ThuBayTinhNguyen" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC16_ThuBayTinhNguyen, m4.TC16_ThuBayTinhNguyen)" min="0" max="10" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">17</td>
+                                <td>Chương trình “Chào đón tân sinh viên”</td>
+                                <td class="text-center text-muted">5 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC17_ChaoDonTanSV)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC17_ChaoDonTanSV" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC17_ChaoDonTanSV, m4.TC17_ChaoDonTanSV)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">18</td>
+                                <td>Tham gia các hoạt động thực hiện trách nhiệm xã hội và phát triển bền vững</td>
+                                <td class="text-center text-muted">3 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m4.TC18_TrachNhiemXaHoi)</td>
+                                <td class="text-center"><input type="number" name="muc4.Admin_TC18_TrachNhiemXaHoi" class="form-control score-input score-m4" value="@FmtKhoa(m4.Admin_TC18_TrachNhiemXaHoi, m4.TC18_TrachNhiemXaHoi)" min="0" max="9" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MỤC V -->
+            <div class="card phieu-card mb-4 overflow-hidden">
+                <div class="section-title d-flex justify-content-between align-items-center">
+                    <span>V. Công tác cán bộ lớp, đoàn thể, thành tích đặc biệt (Tối đa 10 điểm)</span>
+                    <div>
+                        <span class="badge bg-success me-1">SV: @m5.TongMuc5SV / 10</span>
+                        <span class="badge bg-primary" id="badgeM5">Khoa: @(m5.TongMuc5Admin ?? 0) / 10</span>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered table-eval mb-0">
+                        <thead>
+                            <tr class="text-center">
+                                <th style="width: 45px;">#</th>
+                                <th>Nội dung đánh giá</th>
+                                <th style="width: 95px;">Tối đa</th>
+                                <th style="width: 95px;">SV tự chấm</th>
+                                <th style="width: 115px;">Khoa đánh giá</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-center">1</td>
+                                <td>Tham gia tích cực vào phong trào của Lớp, Đoàn, Hội sinh viên</td>
+                                <td class="text-center text-muted">3 đ/HK</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m5.TC1_TichCucPhongTrao)</td>
+                                <td class="text-center"><input type="number" name="muc5.Admin_TC1_TichCucPhongTrao" class="form-control score-input score-m5" value="@FmtKhoa(m5.Admin_TC1_TichCucPhongTrao, m5.TC1_TichCucPhongTrao)" min="0" max="3" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">2</td>
+                                <td>Phát huy vai trò và hoàn thành tốt nhiệm vụ người cán bộ Chi đoàn, Lớp, CLB, đội, nhóm</td>
+                                <td class="text-center text-muted">5 đ/HK</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m5.TC2_CanBoChiDoanLop)</td>
+                                <td class="text-center"><input type="number" name="muc5.Admin_TC2_CanBoChiDoanLop" class="form-control score-input score-m5" value="@FmtKhoa(m5.Admin_TC2_CanBoChiDoanLop, m5.TC2_CanBoChiDoanLop)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">3</td>
+                                <td>Sinh viên đạt giải về học tập, NCKH</td>
+                                <td class="text-center text-muted">7 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m5.TC3_GiaiThuongHocTapNCKH)</td>
+                                <td class="text-center"><input type="number" name="muc5.Admin_TC3_GiaiThuongHocTapNCKH" class="form-control score-input score-m5" value="@FmtKhoa(m5.Admin_TC3_GiaiThuongHocTapNCKH, m5.TC3_GiaiThuongHocTapNCKH)" min="0" max="7" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">4</td>
+                                <td>Sinh viên được tặng Bằng khen của UBND Tỉnh, Thành phố về hoạt động chính trị, VH-XH...</td>
+                                <td class="text-center text-muted">5 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m5.TC4_BangKhenUBNDTinh)</td>
+                                <td class="text-center"><input type="number" name="muc5.Admin_TC4_BangKhenUBNDTinh" class="form-control score-input score-m5" value="@FmtKhoa(m5.Admin_TC4_BangKhenUBNDTinh, m5.TC4_BangKhenUBNDTinh)" min="0" max="5" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">5</td>
+                                <td>Sinh viên đạt danh hiệu sinh viên 5 tốt cấp Trường, Đoàn viên tiêu biểu...</td>
+                                <td class="text-center text-muted">6 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m5.TC5_SV5TotCapTruong)</td>
+                                <td class="text-center"><input type="number" name="muc5.Admin_TC5_SV5TotCapTruong" class="form-control score-input score-m5" value="@FmtKhoa(m5.Admin_TC5_SV5TotCapTruong, m5.TC5_SV5TotCapTruong)" min="0" max="6" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">6</td>
+                                <td>Sinh viên đạt danh hiệu sinh viên 5 tốt cấp Thành, Trung ương, Sao tháng giêng</td>
+                                <td class="text-center text-muted">10 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m5.TC6_SV5TotCapThanhTrungUong)</td>
+                                <td class="text-center"><input type="number" name="muc5.Admin_TC6_SV5TotCapThanhTrungUong" class="form-control score-input score-m5" value="@FmtKhoa(m5.Admin_TC6_SV5TotCapThanhTrungUong, m5.TC6_SV5TotCapThanhTrungUong)" min="0" max="10" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">7</td>
+                                <td>Đạt danh hiệu Đoàn viên ưu tú</td>
+                                <td class="text-center text-muted">6 đ/lần</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m5.TC7_DoanVienUuTu)</td>
+                                <td class="text-center"><input type="number" name="muc5.Admin_TC7_DoanVienUuTu" class="form-control score-input score-m5" value="@FmtKhoa(m5.Admin_TC7_DoanVienUuTu, m5.TC7_DoanVienUuTu)" min="0" max="6" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">8</td>
+                                <td>Giấy khen tập thể của Đoàn được trao cho tập thể có thành tích xuất sắc</td>
+                                <td class="text-center text-muted">2 đ/SV</td>
+                                <td class="text-center fw-bold text-success sv-val">@Fmt(m5.TC8_GiayKhenTapTheDoan)</td>
+                                <td class="text-center"><input type="number" name="muc5.Admin_TC8_GiayKhenTapTheDoan" class="form-control score-input score-m5" value="@FmtKhoa(m5.Admin_TC8_GiayKhenTapTheDoan, m5.TC8_GiayKhenTapTheDoan)" min="0" max="2" step="0.5" @(daChot?"disabled":"") /></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            @if (!daChot)
+            {
+                <div class="mb-5">
+                    <button type="submit" class="btn btn-primary btn-lg w-100 shadow">
+                        <i class="bi bi-save me-2"></i>Lưu Điểm Đánh Giá Của Khoa
+                    </button>
+                </div>
+            }
+        </form>
+    </div>
+
+    <!-- CỘT PHẢI: BẢNG TỔNG KẾT & XEM TRỰC TIẾP FILE MINH CHỨNG -->
+    <div class="col-lg-4">
+        <div class="sticky-summary">
+            <div class="card shadow-sm border-0 mb-4 text-center overflow-hidden" style="border-radius: 12px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white;">
+                <div class="card-body p-4">
+                    <div class="row border-bottom border-secondary pb-3 mb-3">
+                        <div class="col-6 border-end border-secondary">
+                            <div class="small text-white-50">SV TỰ CHẤM</div>
+                            <div class="h2 fw-bold text-success mb-0">@Model?.DiemSVTuCham</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="small text-white-50">KHOA ĐÁNH GIÁ</div>
+                            <div class="h2 fw-bold text-warning mb-0" id="totalAdminScore">@(Model?.DiemAdminCham ?? 0)</div>
+                        </div>
+                    </div>
+
+                    <div class="badge bg-primary fs-6 px-3 py-2 mb-3" id="rankBadge">@Model?.XepLoai</div>
+
+                    <div class="row g-2 text-start small border-top border-secondary pt-3">
+                        <div class="col-6">Mục I: <strong id="lblM1" class="text-warning">0</strong> / 20</div>
+                        <div class="col-6">Mục II: <strong id="lblM2" class="text-warning">0</strong> / 25</div>
+                        <div class="col-6">Mục III: <strong id="lblM3" class="text-warning">0</strong> / 20</div>
+                        <div class="col-6">Mục IV: <strong id="lblM4" class="text-warning">0</strong> / 25</div>
+                        <div class="col-12">Mục V: <strong id="lblM5" class="text-warning">0</strong> / 10</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4" style="border-radius: 12px;">
+                <div class="card-header bg-white fw-bold border-bottom">
+                    <i class="bi bi-file-earmark-word-fill text-primary me-2"></i>Minh Chứng File Word
+                </div>
+                <div class="card-body">
+                    @if (Model?.TrangThaiFile == "Đã nộp" && !string.IsNullOrEmpty(Model?.DuongDanFileWord))
+                    {
+                        <div class="p-2 bg-info bg-opacity-10 border border-info rounded mb-3 small">
+                            <div class="text-muted">File của sinh viên:</div>
+                            <strong class="text-primary text-break">@(Model.TenFileGoc ?? "MinhChung.docx")</strong>
+                        </div>
+
+                        <button type="button" class="btn btn-primary w-100 mb-2 shadow-sm" onclick="xemFileTrucTiep(@Model.Id, '@(Model.TenFileGoc ?? "MinhChung.docx")')">
+                            <i class="bi bi-eye-fill me-1"></i>Xem Trực Tiếp Trên Web
+                        </button>
+
+                        <a href="/Admin/TaiFileMinhChung/@Model.Id" class="btn btn-outline-secondary btn-sm w-100">
+                            <i class="bi bi-download me-1"></i>Tải File Về Máy (Nếu cần)
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="alert alert-secondary small mb-0 text-center">
+                            <i class="bi bi-file-earmark-x me-1"></i>Sinh viên chưa nộp file minh chứng.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL ĐỌC FILE WORD TRỰC TIẾP TRÊN TRÌNH DUYỆT -->
+<div class="modal fade" id="docPreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 14px;">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-file-earmark-word me-2"></i>Xem Minh Chứng: <span id="previewFileName"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-light">
+                <div id="docPreviewLoading" class="text-center py-5">
+                    <div class="spinner-border text-primary mb-2"></div>
+                    <div class="text-muted">Đang đọc nội dung file Word từ server...</div>
+                </div>
+                <div id="docPreviewError" class="alert alert-danger d-none"></div>
+                <div id="docPreviewContent" class="d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <a id="btnModalDownload" href="#" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-download me-1"></i>Tải file này về máy
+                </a>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+<script>
+    function calculateAdminTotal() {
+        let m1 = 0;
+        document.querySelectorAll('.score-m1').forEach(i => m1 += (parseFloat(i.value) || 0));
+        m1 = Math.min(20, Math.max(0, m1));
+
+        let m2 = 0;
+        document.querySelectorAll('.score-m2').forEach(i => {
+            let v = Math.min(5, Math.max(0, parseFloat(i.value) || 0));
+            m2 += v;
+        });
+        m2 = Math.min(25, Math.max(0, m2));
+
+        let m3 = 0;
+        document.querySelectorAll('.score-m3').forEach(i => m3 += Math.max(0, parseFloat(i.value) || 0));
+        m3 = Math.min(20, Math.max(0, m3));
+
+        let m4 = 0;
+        document.querySelectorAll('.score-m4').forEach(i => m4 += Math.max(0, parseFloat(i.value) || 0));
+        m4 = Math.min(25, Math.max(0, m4));
+
+        let m5 = 0;
+        document.querySelectorAll('.score-m5').forEach(i => m5 += Math.max(0, parseFloat(i.value) || 0));
+        m5 = Math.min(10, Math.max(0, m5));
+
+        let total = m1 + m2 + m3 + m4 + m5;
+
+        document.getElementById('badgeM1').textContent = 'Khoa: ' + m1.toFixed(1) + ' / 20';
+        document.getElementById('badgeM2').textContent = 'Khoa: ' + m2.toFixed(1) + ' / 25';
+        document.getElementById('badgeM3').textContent = 'Khoa: ' + m3.toFixed(1) + ' / 20';
+        document.getElementById('badgeM4').textContent = 'Khoa: ' + m4.toFixed(1) + ' / 25';
+        document.getElementById('badgeM5').textContent = 'Khoa: ' + m5.toFixed(1) + ' / 10';
+
+        document.getElementById('lblM1').textContent = m1.toFixed(1);
+        document.getElementById('lblM2').textContent = m2.toFixed(1);
+        document.getElementById('lblM3').textContent = m3.toFixed(1);
+        document.getElementById('lblM4').textContent = m4.toFixed(1);
+        document.getElementById('lblM5').textContent = m5.toFixed(1);
+
+        document.getElementById('totalAdminScore').textContent = total.toFixed(1);
+
+        let rank = "Kém";
+        let rankClass = "badge bg-secondary";
+        if (total >= 90) { rank = "Xuất sắc"; rankClass = "badge bg-success"; }
+        else if (total >= 80) { rank = "Tốt"; rankClass = "badge bg-primary"; }
+        else if (total >= 65) { rank = "Khá"; rankClass = "badge bg-info text-dark"; }
+        else if (total >= 50) { rank = "Trung bình"; rankClass = "badge bg-warning text-dark"; }
+        else if (total >= 35) { rank = "Yếu"; rankClass = "badge bg-danger"; }
+
+        const rBadge = document.getElementById('rankBadge');
+        rBadge.textContent = rank;
+        rBadge.className = rankClass + ' fs-6 px-3 py-2 mb-3';
+    }
+
+    function copyDiemSVSangKhoa() {
+        document.querySelectorAll('#adminEvalForm tbody tr').forEach(tr => {
+            const svCell = tr.querySelector('.sv-val');
+            const input = tr.querySelector('.score-input');
+            if (svCell && input && !input.disabled) {
+                input.value = parseFloat(svCell.textContent.trim().replace(',', '.')) || 0;
+            }
+        });
+        calculateAdminTotal();
+    }
+
+    document.querySelectorAll('.score-input').forEach(input => {
+        input.addEventListener('input', calculateAdminTotal);
+    });
+
+    calculateAdminTotal();
+
+    async function xemFileTrucTiep(phieuId, fileName) {
+        document.getElementById('previewFileName').textContent = fileName;
+        document.getElementById('btnModalDownload').href = `/Admin/TaiFileMinhChung/${phieuId}`;
+
+        const loadingEl = document.getElementById('docPreviewLoading');
+        const errorEl = document.getElementById('docPreviewError');
+        const contentEl = document.getElementById('docPreviewContent');
+
+        loadingEl.classList.remove('d-none');
+        errorEl.classList.add('d-none');
+        contentEl.classList.add('d-none');
+        contentEl.innerHTML = '';
+
+        const modal = new bootstrap.Modal(document.getElementById('docPreviewModal'));
+        modal.show();
+
+        try {
+            const response = await fetch(`/Admin/XemFileMinhChung/${phieuId}`);
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText || 'Không thể tải nội dung file từ server.');
+            }
+
+            const arrayBuffer = await response.arrayBuffer();
+            const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+
+            loadingEl.classList.add('d-none');
+            contentEl.innerHTML = result.value || '<p class="text-muted text-center">File Word trống không có nội dung văn bản.</p>';
+            contentEl.classList.remove('d-none');
+        } catch (err) {
+            loadingEl.classList.add('d-none');
+            errorEl.textContent = '❌ ' + err.message;
+            errorEl.classList.remove('d-none');
+        }
+    }
+</script>
+}
