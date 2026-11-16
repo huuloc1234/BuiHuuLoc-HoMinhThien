@@ -1,0 +1,61 @@
+/* ============================================================
+   DiemRenLuyen - Custom CSS (site.css)
+   ============================================================ */
+
+* { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+/* Smooth scroll */
+html { scroll-behavior: smooth; }
+
+/* Navbar glow */
+.navbar.bg-primary { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%) !important; }
+
+/* Card defaults */
+.card { transition: box-shadow 0.2s; }
+.card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1) !important; }
+
+/* Badge improvements */
+.badge { font-weight: 500; }
+
+/* Table styles */
+.table > :not(caption) > * > * { padding: 0.6rem 0.75rem; }
+
+/* Score input animations */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+
+/* Alert close button */
+.btn-close { font-size: 0.75rem; }
+
+/* Footer */
+footer { font-size: 0.8rem; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .phieu-header h4 { font-size: 1.1rem; }
+    .diem-tong-so { font-size: 2.5rem; }
+}
+
+/* Loading animation */
+.loading-pulse {
+    animation: loadPulse 1.5s ease-in-out infinite;
+}
+@keyframes loadPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* Blockchain status indicator */
+.blockchain-live {
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: #2ecc71;
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(46, 204, 113, 0); }
+}

@@ -1,0 +1,231 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đăng Nhập - Hệ Thống Điểm Rèn Luyện Blockchain</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 460px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            color: #f8fafc;
+        }
+        .brand-icon {
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.25rem; font-size: 1.8rem; color: white;
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+        .form-control {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white; border-radius: 10px; padding: 12px 14px;
+        }
+        .form-control:focus {
+            background: rgba(15, 23, 42, 0.9);
+            border-color: #3b82f6; color: white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        .form-control::placeholder { color: rgba(255, 255, 255, 0.4); }
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            border: none; color: white; font-weight: 600;
+            padding: 12px; border-radius: 10px; width: 100%;
+            transition: all 0.2s;
+        }
+        .btn-primary-custom:hover { opacity: 0.95; transform: translateY(-1px); color: white; }
+        .btn-metamask {
+            background: linear-gradient(135deg, #f6851b, #e4761b);
+            border: none; color: white; font-weight: 600;
+            padding: 12px; border-radius: 10px; width: 100%;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: all 0.2s;
+        }
+        .btn-metamask:hover { opacity: 0.95; transform: translateY(-1px); color: white; }
+        .divider {
+            display: flex; align-items: center; text-align: center;
+            margin: 1.5rem 0; color: rgba(255, 255, 255, 0.4); font-size: 0.8rem;
+        }
+        .divider::before, .divider::after {
+            content: ''; flex: 1; border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .divider:not(:empty)::before { margin-right: .75em; }
+        .divider:not(:empty)::after { margin-left: .75em; }
+        .demo-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 10px; padding: 10px 14px;
+            font-size: 0.78rem; color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <!-- Logo -->
+        <div class="brand-icon">
+            <i class="bi bi-shield-check"></i>
+        </div>
+
+        <h4 class="text-center fw-bold mb-1">Điểm Rèn Luyện</h4>
+        <p class="text-center text-muted small mb-3">Kiến trúc Hybrid Blockchain (Sepolia Testnet)</p>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger py-2 small" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>@ViewBag.Error
+            </div>
+        }
+
+        <!-- CÁCH 1: ĐĂNG NHẬP TRUYỀN THỐNG (EMAIL / MSSV & MẬT KHẨU) -->
+        <form method="post" action="/Auth/Login">
+            @Html.AntiForgeryToken()
+            <div class="mb-3">
+                <label class="form-label small text-muted">Email hoặc MSSV</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-secondary text-muted"><i class="bi bi-person"></i></span>
+                    <input type="text" name="emailHoacMSSV" class="form-control" placeholder="Nhập Email hoặc MSSV..." required />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label small text-muted">Mật khẩu</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-secondary text-muted"><i class="bi bi-lock"></i></span>
+                    <input type="password" name="matKhau" class="form-control" placeholder="Nhập mật khẩu..." required />
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary-custom mb-2">
+                <i class="bi bi-box-arrow-in-right me-1"></i>Đăng Nhập
+            </button>
+        </form>
+
+        <!-- ĐƯỜNG KẺ PHÂN CÁCH -->
+        <div class="divider">HOẶC ĐĂNG NHẬP WEB3</div>
+
+        <!-- CÁCH 2: ĐĂNG NHẬP BẰNG METAMASK -->
+        <button id="btnMetaMask" class="btn-metamask" onclick="dangNhapMetaMask()">
+            <svg width="24" height="24" viewBox="0 0 318.6 318.6">
+                <polygon fill="#E2761B" points="274.1,35.5 174.6,109.4 193,65.8"/>
+                <polygon fill="#E4761B" points="44.4,35.5 143.1,110.1 125.6,65.8"/>
+                <polygon fill="#D7C1B3" points="238.3,206.8 211.8,247.4 268.5,263 284.8,207.7"/>
+                <polygon fill="#233447" points="33.9,207.7 50.1,263 106.8,247.4 80.3,206.8"/>
+                <polygon fill="#CD6116" points="103.6,138.2 87.8,162.1 144.1,164.6 142.1,104.1"/>
+                <polygon fill="#CD6116" points="214.9,138.2 175.9,103.4 174.6,164.6 230.8,162.1"/>
+                <polygon fill="#E4751F" points="106.8,247.4 140.6,230.9 111.4,208.1"/>
+                <polygon fill="#E4751F" points="177.9,230.9 211.8,247.4 207.1,208.1"/>
+            </svg>
+            Đăng Nhập Bằng MetaMask
+        </button>
+
+        <div id="mmStatus" class="small text-warning text-center mt-2 d-none"></div>
+
+        <div class="text-center mt-3 small">
+            <span class="text-muted">Chưa có tài khoản?</span>
+            <a href="/Auth/Register" class="text-info text-decoration-none fw-semibold ms-1">Đăng ký sinh viên ngay</a>
+        </div>
+
+        <!-- HỘP THÔNG TIN TÀI KHOẢN MẪU DỄ DÀNG TEST -->
+      
+    </div>
+
+    <!-- Script Native Web3 Sign (Không phụ thuộc thư viện ngoài) -->
+    <script>
+    async function dangNhapMetaMask() {
+        const statusEl = document.getElementById('mmStatus');
+        const btn = document.getElementById('btnMetaMask');
+        statusEl.classList.remove('d-none');
+
+        if (typeof window.ethereum === 'undefined') {
+            statusEl.className = 'small text-danger text-center mt-2';
+            statusEl.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i>Vui lòng cài đặt tiện ích MetaMask trên trình duyệt!';
+            return;
+        }
+
+        try {
+            btn.disabled = true;
+            statusEl.textContent = 'Đang kết nối ví MetaMask...';
+
+            // 1. Lấy danh sách tài khoản ví
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            if (!accounts || accounts.length === 0) {
+                throw new Error("Không tìm thấy tài khoản ví.");
+            }
+            const diaChiVi = accounts[0];
+
+            statusEl.textContent = `Ví: ${diaChiVi.substring(0,6)}...${diaChiVi.substring(38)} | Chờ ký...`;
+
+            // 2. Ký xác thực (Personal Sign)
+            const timestamp = Date.now();
+            const message = `Dang nhap he thong Diem Ren Luyen Blockchain\nDia chi vi: ${diaChiVi}\nTimestamp: ${timestamp}`;
+            
+            // Dùng trực tiếp RPC của MetaMask (KHÔNG CẦN thư viện ethers.js để tránh lỗi "ethers is not defined")
+            const signature = await window.ethereum.request({
+                method: 'personal_sign',
+                params: [message, diaChiVi]
+            });
+
+            statusEl.textContent = 'Đang xác thực thông tin...';
+
+            // 3. Gửi lên server
+            const formData = new FormData();
+            formData.append('diaChiVi', diaChiVi);
+            formData.append('message', message);
+            formData.append('signature', signature);
+
+            const res = await fetch('/Auth/MetaMaskLogin', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                statusEl.className = 'small text-success text-center mt-2';
+                statusEl.textContent = '✅ Đăng nhập thành công! Đang chuyển hướng...';
+                setTimeout(() => window.location.href = data.redirectUrl, 800);
+            } else if (data.needRegister) {
+                statusEl.textContent = 'Ví chưa liên kết! Chuyển sang form đăng ký...';
+                setTimeout(() => window.location.href = `/Auth/Register?diaChiVi=${diaChiVi}`, 800);
+            } else {
+                statusEl.className = 'small text-danger text-center mt-2';
+                statusEl.textContent = data.message || 'Đăng nhập thất bại.';
+                btn.disabled = false;
+            }
+
+        } catch (err) {
+            statusEl.className = 'small text-danger text-center mt-2';
+            if (err.code === 4001) {
+                statusEl.textContent = 'Bạn đã hủy yêu cầu ký trên MetaMask.';
+            } else {
+                statusEl.textContent = 'Lỗi: ' + (err.message || err);
+            }
+            btn.disabled = false;
+        }
+    }
+    </script>
+</body>
+</html>

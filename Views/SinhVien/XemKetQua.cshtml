@@ -1,0 +1,135 @@
+@model DiemRenLuyen.Models.PhieuDanhGia
+@{
+    ViewData["Title"] = "Kết Quả Rèn Luyện Chính Thức";
+    var m1 = Model?.Muc1 ?? new DiemRenLuyen.Models.ChiTietMuc1();
+    var m2 = Model?.Muc2 ?? new DiemRenLuyen.Models.ChiTietMuc2();
+    var m3 = Model?.Muc3 ?? new DiemRenLuyen.Models.ChiTietMuc3();
+    var m4 = Model?.Muc4 ?? new DiemRenLuyen.Models.ChiTietMuc4();
+    var m5 = Model?.Muc5 ?? new DiemRenLuyen.Models.ChiTietMuc5();
+    var daChot = Model?.DaChot ?? false;
+}
+
+<div class="container py-4">
+    <div class="card shadow border-0 overflow-hidden" style="border-radius: 16px;">
+        <div class="card-header bg-dark text-white p-4 text-center">
+            <span class="badge bg-warning text-dark px-3 py-1 mb-2">Sepolia Testnet Verified</span>
+            <h3 class="fw-bold mb-1">KẾT QUẢ ĐIỂM RÈN LUYỆN CHÍNH THỨC</h3>
+            <p class="text-muted small mb-0">Học kỳ: @Model?.HocKy - Năm học: @Model?.NamHoc</p>
+        </div>
+
+        <div class="card-body p-4">
+            <!-- THÔNG TIN SINH VIÊN (DYNAMIC TỪ MODEL) -->
+            <div class="row g-3 mb-4 pb-3 border-bottom">
+                <div class="col-md-3 col-6">
+                    <span class="text-muted small d-block">Họ và tên</span>
+                    <strong>@(Model?.TaiKhoan?.HoTen)</strong>
+                </div>
+                <div class="col-md-3 col-6">
+                    <span class="text-muted small d-block">MSSV</span>
+                    <strong>@(Model?.MSSV)</strong>
+                </div>
+                <div class="col-md-3 col-6">
+                    <span class="text-muted small d-block">Lớp</span>
+                    <strong>@(Model?.TaiKhoan?.Lop)</strong>
+                </div>
+                <div class="col-md-3 col-6">
+                    <span class="text-muted small d-block">Khóa học</span>
+                    <strong>@(Model?.TaiKhoan?.KhoaHoc)</strong>
+                </div>
+            </div>
+
+            <!-- BẢNG ĐIỂM 5 MỤC SO SÁNH -->
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered text-center align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nội dung mục đánh giá</th>
+                            <th style="width: 120px;">Điểm tối đa</th>
+                            <th style="width: 160px;">Điểm SV tự chấm</th>
+                            <th style="width: 160px;" class="table-primary">Khoa đánh giá</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-start">I. Ý thức tham gia học tập</td>
+                            <td>20</td>
+                            <td class="fw-bold">@m1.TongMuc1SV</td>
+                            <td class="fw-bold text-primary fs-6 table-primary">@(m1.TongMuc1Admin ?? m1.TongMuc1SV)</td>
+                        </tr>
+                        <tr>
+                            <td class="text-start">II. Ý thức chấp hành nội quy, quy chế</td>
+                            <td>25</td>
+                            <td class="fw-bold">@m2.TongMuc2SV</td>
+                            <td class="fw-bold text-primary fs-6 table-primary">@(m2.TongMuc2Admin ?? m2.TongMuc2SV)</td>
+                        </tr>
+                        <tr>
+                            <td class="text-start">III. Ý thức tham gia hoạt động chính trị, XH, VH-VN, TDTT...</td>
+                            <td>20</td>
+                            <td class="fw-bold">@m3.TongMuc3SV</td>
+                            <td class="fw-bold text-primary fs-6 table-primary">@(m3.TongMuc3Admin ?? m3.TongMuc3SV)</td>
+                        </tr>
+                        <tr>
+                            <td class="text-start">IV. Ý thức công dân trong quan hệ cộng đồng</td>
+                            <td>25</td>
+                            <td class="fw-bold">@m4.TongMuc4SV</td>
+                            <td class="fw-bold text-primary fs-6 table-primary">@(m4.TongMuc4Admin ?? m4.TongMuc4SV)</td>
+                        </tr>
+                        <tr>
+                            <td class="text-start">V. Ý thức và kết quả tham gia công tác cán bộ lớp, đoàn thể...</td>
+                            <td>10</td>
+                            <td class="fw-bold">@m5.TongMuc5SV</td>
+                            <td class="fw-bold text-primary fs-6 table-primary">@(m5.TongMuc5Admin ?? m5.TongMuc5SV)</td>
+                        </tr>
+                    </tbody>
+                    <tfoot class="table-light fw-bold fs-5">
+                        <tr>
+                            <td class="text-start">TỔNG ĐIỂM CHÍNH THỨC</td>
+                            <td>100</td>
+                            <td class="text-muted">@Model?.DiemSVTuCham</td>
+                            <td class="text-primary table-primary fs-4">@(Model?.DiemAdminCham ?? Model?.DiemSVTuCham)</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- XẾP LOẠI & TRẠNG THÁI BLOCKCHAIN -->
+            <div class="row g-4 align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <span class="text-muted d-block small">Xếp loại rèn luyện:</span>
+                    <span class="@Model?.XepLoaiCssClass fs-4 px-4 py-2 mt-1 d-inline-block">@Model?.XepLoai</span>
+                </div>
+                <div class="col-md-6">
+                    @if (daChot)
+                    {
+                        <div class="p-3 bg-light rounded border border-success">
+                            <div class="d-flex align-items-center gap-2 text-success fw-bold mb-1">
+                                <i class="bi bi-shield-check fs-5"></i> DỮ LIỆU ĐÃ ĐƯỢC BẢO CHỨNG BLOCKCHAIN
+                            </div>
+                            <div class="small text-muted mb-1">Thời gian chốt: @Model?.NgayChot?.ToString("dd/MM/yyyy HH:mm:ss")</div>
+                            <div class="small font-monospace text-truncate mb-2" title="@Model?.DataHash">Hash: @Model?.DataHash</div>
+                            @if (!string.IsNullOrEmpty(Model?.TxHash))
+                            {
+                                <a href="https://sepolia.etherscan.io/tx/@Model.TxHash" target="_blank" class="btn btn-sm btn-outline-primary w-100">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i>Kiểm Tra Giao Dịch Trên Etherscan
+                                </a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-3 bg-light rounded text-muted small text-center">
+                            <i class="bi bi-hourglass-split fs-4 d-block mb-1 text-warning"></i>
+                            Điểm đang chờ Hội đồng/Khoa họp xét duyệt và chốt khóa lên Smart Contract.
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="text-center mt-4 pt-3 border-top">
+                <a href="/SinhVien/Dashboard" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Quay lại phiếu tự chấm
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
