@@ -7,18 +7,80 @@ Hệ thống web quản lý quy trình đánh giá điểm rèn luyện sinh vi�
 **On-chain (Ethereum Sepolia Testnet):** Sau khi Khoa duyệt điểm chính thức, Backend tính mã băm mật mã **SHA-256** từ chuỗi chuẩn hóa `MSSV|HocKy|TongDiem|TenFile`. Admin ký giao dịch qua **MetaMask** để ghi vĩnh viễn mã băm này kèm mốc thời gian (`block.timestamp`) lên Smart Contract `DiemRenLuyenTracker.sol`.
 **Đối soát toàn vẹn & Điều tra (Forensics):** Bất kỳ khi nào kiểm tra toàn vẹn, hệ thống băm lại dữ liệu hiện tại trong SQL Server và đối chiếu với mã băm gốc trên Blockchain. Nếu phát hiện sai lệch, hệ thống lập tức phát cảnh báo đỏ và truy xuất thủ phạm từ bảng nhật ký Trigger SQL.
 
-## 2. Công Nghệ Sử Dụng
+## 🛠️ 2. Công Nghệ Sử Dụng
 
-| Thành phần | Công nghệ / Thư viện |
-| **Backend** | ASP.NET Core 8.0 MVC, C#, Entity Framework Core 8.0, Dapper |
-| **Bảo mật & Xác thực** | JWT (JSON Web Token) kết hợp HttpOnly Cookie, Web3 Signature |
-| **Cơ sở dữ liệu** | Microsoft SQL Server (kèm Database Trigger truy vết) |
-| **Blockchain & Web3** | Solidity `^0.8.20`, Ethereum Sepolia Testnet (`ChainId: 11155111`), Ethers.js, MetaMask |
-| **Frontend** | Razor Views, Bootstrap 5, Bootstrap Icons, `mammoth.js` (xem trực tiếp file Word trên web) |
+<table>
+  <thead>
+    <tr>
+      <th align="left">Thành phần</th>
+      <th align="left">Công nghệ / Thư viện</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Backend</strong></td>
+      <td>ASP.NET Core 8.0 MVC, C#, Entity Framework Core 8.0, Dapper</td>
+    </tr>
+    <tr>
+      <td><strong>Bảo mật &amp; Xác thực</strong></td>
+      <td>JWT (JSON Web Token) kết hợp HttpOnly Cookie, Web3 Signature</td>
+    </tr>
+    <tr>
+      <td><strong>Cơ sở dữ liệu</strong></td>
+      <td>Microsoft SQL Server (kèm Database Trigger truy vết)</td>
+    </tr>
+    <tr>
+      <td><strong>Blockchain &amp; Web3</strong></td>
+      <td>Solidity <code>^0.8.20</code>, Ethereum Sepolia Testnet (<code>ChainId: 11155111</code>), Ethers.js, MetaMask</td>
+    </tr>
+    <tr>
+      <td><strong>Frontend</strong></td>
+      <td>Razor Views, Bootstrap 5, Bootstrap Icons, <code>mammoth.js</code> (xem trực tiếp file Word trên web)</td>
+    </tr>
+  </tbody>
+</table>
 
-##  3. Bảng Phân Công Công Việc
-**Bùi Hữu Lộc** HTTT2311023 Thiết kế & triển khai Smart Contract `DiemRenLuyenTracker.sol` trên Sepolia.Thiết kế CSDL SQL Server,các dịch vụ lõi (`HashService`, `BlockchainService`, `PhieuDanhGiaService`).Xây dựng `AdminController`, `HomeController` và giao diện Admin (`Index.cshtml` chốt hàng loạt, `ChiTiet.cshtml` chấm 61 tiêu chí & xem trực tiếp file Word). |
-**Hồ Minh Thiện** HTTT2311010  Xây dựng cơ chế đăng nhập truyền thống & liên kết ký xác thực ví MetaMask (`AuthController`, `AuthService`, cấp phát JWT Cookie).Xây dựng luồng nghiệp vụ Sinh viên (`SinhVienController`): tự đánh giá 61 tiêu chí, gửi khiếu nại điểm trước khi chốt.Xây dựng dịch vụ xử lý & kiểm duyệt tệp minh chứng Word (`FileService`).Thiết kế giao diện Dashboard Sinh viên, trang Đăng nhập và bố cục dùng chung (`_Layout.cshtml`). |
+---
+
+## 👥 3. Bảng Phân Công Công Việc
+
+**Trường Đại học Kỹ thuật - Công nghệ Cần Thơ (CTUT)** – Ngành Hệ thống thông tin
+
+<table>
+  <thead>
+    <tr>
+      <th align="center">STT</th>
+      <th align="left">Họ và Tên</th>
+      <th align="center">MSSV</th>
+      <th align="left">Vai trò</th>
+      <th align="left">Nhiệm vụ &amp; Module phụ trách</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><strong>1</strong></td>
+      <td><strong>Bùi Hữu Lộc</strong></td>
+      <td align="center"><code>HTTT2311023</code></td>
+      <td>
+        • Thiết kế &amp; triển khai Smart Contract <code>DiemRenLuyenTracker.sol</code> trên Sepolia.<br>
+        • Thiết kế CSDL SQL Server.<br>
+        • các dịch vụ lõi (<code>HashService</code>, <code>BlockchainService</code>, <code>PhieuDanhGiaService</code>).<br>
+        • Xây dựng <code>AdminController</code>, <code>HomeController</code> và giao diện Admin (<code>Index.cshtml</code> chốt hàng loạt, <code>ChiTiet.cshtml</code> chấm 61 tiêu chí &amp; xem trực tiếp file Word).
+      </td>
+    </tr>
+    <tr>
+      <td align="center"><strong>2</strong></td>
+      <td><strong>Hồ Minh Thiện</strong></td>
+      <td align="center"><code>HTTT2311010</code></td>
+      <td>
+        • Xây dựng cơ chế đăng nhập truyền thống &amp; liên kết ký xác thực ví MetaMask (<code>AuthController</code>, <code>AuthService</code>, cấp phát JWT Cookie).<br>
+        • Xây dựng luồng nghiệp vụ Sinh viên (<code>SinhVienController</code>): tự đánh giá 61 tiêu chí, gửi khiếu nại điểm trước khi chốt.<br>
+        • Xây dựng dịch vụ xử lý &amp; kiểm duyệt tệp minh chứng Word (<code>FileService</code>).<br>
+        • Thiết kế giao diện Dashboard Sinh viên, trang Đăng nhập và bố cục dùng chung (<code>_Layout.cshtml</code>).
+      </td>
+    </tr>
+  </tbody>
+</table>
 ## 4. Cấu Trúc Thư Mục Dự Án
 
 ```text
