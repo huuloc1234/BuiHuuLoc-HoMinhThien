@@ -20,6 +20,8 @@ Hệ thống web quản lý quy trình đánh giá điểm rèn luyện sinh vi�
 **Bùi Hữu Lộc** HTTT2311023 Thiết kế & triển khai Smart Contract `DiemRenLuyenTracker.sol` trên Sepolia.Thiết kế CSDL SQL Server,các dịch vụ lõi (`HashService`, `BlockchainService`, `PhieuDanhGiaService`).Xây dựng `AdminController`, `HomeController` và giao diện Admin (`Index.cshtml` chốt hàng loạt, `ChiTiet.cshtml` chấm 61 tiêu chí & xem trực tiếp file Word). |
 **Hồ Minh Thiện** HTTT2311010  Xây dựng cơ chế đăng nhập truyền thống & liên kết ký xác thực ví MetaMask (`AuthController`, `AuthService`, cấp phát JWT Cookie).Xây dựng luồng nghiệp vụ Sinh viên (`SinhVienController`): tự đánh giá 61 tiêu chí, gửi khiếu nại điểm trước khi chốt.Xây dựng dịch vụ xử lý & kiểm duyệt tệp minh chứng Word (`FileService`).Thiết kế giao diện Dashboard Sinh viên, trang Đăng nhập và bố cục dùng chung (`_Layout.cshtml`). |
 ## 4. Cấu Trúc Thư Mục Dự Án
+
+```text
 DiemRenLuyen/
 ├── Contracts/
 │   └── DiemRenLuyenTracker.sol      # Smart Contract lưu trữ và xác minh mã hash SHA-256
@@ -45,7 +47,7 @@ DiemRenLuyen/
 ├── appsettings.json                 # Cấu hình ConnectionString, Blockchain, FileUpload và JWT
 ├── DiemRenLuyen.csproj              # Khai báo các gói thư viện NuGet (.NET 8.0)
 └── Program.cs                       # Cấu hình DI Container, JWT Cookie Authentication và Middleware
-
+```
 ## 5. Hướng Dẫn Cài Đặt & Chạy Dự Án
 
 ### Bước 1: Chuẩn bị môi trường
